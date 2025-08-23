@@ -1,68 +1,203 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Клеточное поле</title>
-  <style>
-    canvas {
-      border: 1px solid black;
-      background: #eee;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Grid Game (mobile)</title>
+<style>
+  html,body{margin:0;height:100%;background:#eee;font-family:system-ui,Arial}
+  #wrap{display:flex;flex-direction:column;height:100%}
+  canvas{touch-action:none; /* отключаем зум/скролл жестами на канвасе */ 
+         display:block;margin:0 auto;background:#eee;border:1px solid #999}
+  /* D-pad */
+  .controls{
+    position:fixed; left:0; right:0; bottom:0; 
+    display:flex; justify-content:center; gap:20px;
+    padding:16px 12px 28px; pointer-events:none; /* чтобы клики шли только по кнопкам */
+  }
+  .pad{
+    pointer-events:auto;
+    display:grid; grid-template-columns:64px 64px 64px; grid-template-rows:64px 64px 64px;
+    gap:8px; opacity:.95; user-select:none;
+  }
+  .btn{
+    background:#fff; border:1px solid #bbb; border-radius:16px;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:600;
+    touch-action:none;
+  }
+  .btn:active{transform:translateY(1px)}
+  /* расположение стрелок */
+  .up   {grid-column:2; grid-row:1}
+  .left {grid-column:1; grid-row:2}
+  .right{grid-column:3; grid-row:2}
+  .down {grid-column:2; grid-row:3}
+  /* скрываем контролы на очень маленькой высоте, если мешают */
+  @media (max-height:520px){ .controls{display:none} }
+</style>
 </head>
 <body>
-  <canvas id="game" width="300" height="300"></canvas>
-  <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+<div id="wrap">
+  <canvas id="game" width="720" height="528"></canvas>
+</div>
 
-    const gridSize = 30; // размер клетки
-    const rows = 10;
-    const cols = 10;
+<!-- On-screen D-pad -->
+<div class="controls" aria-hidden="false">
+  <div class="pad">
+    <div class="btn up"    data-dx="0"  data-dy="-1">▲</div>
+    <div class="btn left"  data-dx="-1" data-dy="0">◀</div>
+    <div class="btn right" data-dx="1"  data-dy="0">▶</div>
+    <div class="btn down"  data-dx="0"  data-dy="1">▼</div>
+  </div>
+</div>
 
-    // персонаж
-    let player = {x: 0, y: 0};
+<script>
+/* ======== ИГРА (пример) ======== */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
 
-    // рисуем поле
-    function drawGrid() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = "#aaa";
-      for (let i = 0; i <= rows; i++) {
-        ctx.beginPath();
-        ctx.moveTo(0, i * gridSize);
-        ctx.lineTo(cols * gridSize, i * gridSize);
-        ctx.stroke();
+const CELL = 48;
+const VIEW_COLS = Math.floor(canvas.width / CELL);
+const VIEW_ROWS = Math.floor(canvas.height / CELL);
+
+let px = 0, py = 0; // позиция игрока в «мире»
+
+// детерминированные "стены" (пример: простая хеш-функция)
+function isWall(x,y){
+  // свободная зона у старта
+  if ((x===0 && y===0) || (Math.abs(x)+Math.abs(y)===1)) return false;
+  // псевдослучай: периодическая сетка + шахматка
+  const v = (x*73856093 ^ y*19349663) >>> 0;
+  return (v % 100) < 12; // ~12% стен
+}
+
+function moveBy(dx, dy){
+  const nx = px + dx, ny = py + dy;
+  if (!isWall(nx, ny)){ px = nx; py = ny; render(); }
+}
+
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // видимая область
+  const halfC = Math.floor(VIEW_COLS/2), halfR = Math.floor(VIEW_ROWS/2);
+  const tlx = px - halfC, tly = py - halfR;
+  const brx = tlx + VIEW_COLS - 1, bry = tly + VIEW_ROWS - 1;
+
+  // сетка
+  ctx.strokeStyle = '#bbb';
+  for(let r=0;r<=VIEW_ROWS;r++){
+    const y=r*CELL; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+  }
+  for(let c=0;c<=VIEW_COLS;c++){
+    const x=c*CELL; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+  }
+
+  // стены
+  ctx.fillStyle = '#777';
+  for(let gy=tly; gy<=bry; gy++){
+    for(let gx=tlx; gx<=brx; gx++){
+      if (isWall(gx,gy)){
+        const sx=(gx-tlx)*CELL+1, sy=(gy-tly)*CELL+1;
+        ctx.fillRect(sx,sy,CELL-2,CELL-2);
       }
-      for (let j = 0; j <= cols; j++) {
-        ctx.beginPath();
-        ctx.moveTo(j * gridSize, 0);
-        ctx.lineTo(j * gridSize, rows * gridSize);
-        ctx.stroke();
-      }
     }
+  }
 
-    // рисуем игрока
-    function drawPlayer() {
-      ctx.fillStyle = "blue";
-      ctx.fillRect(player.x * gridSize, player.y * gridSize, gridSize, gridSize);
+  // игрок (в центре)
+  ctx.fillStyle = '#3572ff';
+  const psx=(px-tlx)*CELL+1, psy=(py-tly)*CELL+1;
+  ctx.fillRect(psx,psy,CELL-2,CELL-2);
+}
+render();
+
+/* ======== КЛАВИАТУРА (остаётся) ======== */
+window.addEventListener('keydown', e=>{
+  if (e.key==='ArrowUp' || e.key==='w') moveBy(0,-1);
+  else if (e.key==='ArrowDown' || e.key==='s') moveBy(0,1);
+  else if (e.key==='ArrowLeft' || e.key==='a') moveBy(-1,0);
+  else if (e.key==='ArrowRight' || e.key==='d') moveBy(1,0);
+});
+
+/* ======== МОБИЛЬНОЕ УПРАВЛЕНИЕ ======== */
+/* 1) D-pad с удержанием (автоповтор) */
+const HOLD_DELAY = 140; // мс между шагами при удержании
+let holdTimer = null;
+
+function startHold(dx,dy){
+  moveBy(dx,dy);
+  stopHold();
+  holdTimer = setInterval(()=>moveBy(dx,dy), HOLD_DELAY);
+}
+function stopHold(){
+  if(holdTimer){ clearInterval(holdTimer); holdTimer = null; }
+}
+document.querySelectorAll('.btn').forEach(btn=>{
+  const dx = parseInt(btn.dataset.dx,10);
+  const dy = parseInt(btn.dataset.dy,10);
+
+  btn.addEventListener('touchstart', ev=>{
+    ev.preventDefault(); startHold(dx,dy);
+  }, {passive:false});
+
+  btn.addEventListener('touchend', ev=>{
+    ev.preventDefault(); stopHold();
+  }, {passive:false});
+
+  // на случай ухода пальца
+  btn.addEventListener('touchcancel', stopHold, {passive:true});
+
+  // клик мышью тоже пусть работает (эмуляторы/ПК)
+  btn.addEventListener('mousedown', ()=>startHold(dx,dy));
+  window.addEventListener('mouseup', stopHold);
+});
+
+/* 2) Свайпы по канвасу */
+let swipeStart = null;
+canvas.addEventListener('touchstart', (e)=>{
+  if (!e.touches.length) return;
+  swipeStart = {x:e.touches[0].clientX, y:e.touches[0].clientY, t:performance.now()};
+}, {passive:true});
+
+canvas.addEventListener('touchend', (e)=>{
+  if (!swipeStart) return;
+  const t = performance.now()-swipeStart.t;
+  const touch = (e.changedTouches && e.changedTouches[0]) || null;
+  if (touch){
+    const dx = touch.clientX - swipeStart.x;
+    const dy = touch.clientY - swipeStart.y;
+    const absX = Math.abs(dx), absY = Math.abs(dy);
+    const MIN = 24; // минимальная длина свайпа (px)
+    if (Math.max(absX,absY) >= MIN && t < 600){
+      if (absX>absY) moveBy(dx>0?1:-1,0);
+      else           moveBy(0,dy>0?1:-1);
+    } else {
+      // тап без свайпа — можно назначить действие (пока ничего)
     }
+  }
+  swipeStart = null;
+}, {passive:true});
 
-    // обработка клавиш
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowUp" && player.y > 0) player.y--;
-      if (e.key === "ArrowDown" && player.y < rows-1) player.y++;
-      if (e.key === "ArrowLeft" && player.x > 0) player.x--;
-      if (e.key === "ArrowRight" && player.x < cols-1) player.x++;
-      render();
-    });
+/* блокируем скролл при свайпах по странице, чтобы управление было отзывчивым */
+document.addEventListener('touchmove', (e)=>{
+  // если двигаем по канвасу или кнопке — не скроллим страницу
+  const path = e.composedPath ? e.composedPath() : [];
+  if (path.includes(canvas) || path.some(el=>el?.classList?.contains('btn'))) {
+    e.preventDefault();
+  }
+}, {passive:false});
 
-    // перерисовка
-    function render() {
-      drawGrid();
-      drawPlayer();
-    }
-
-    render();
-  </script>
+/* ======== DPR: чёткая картинка на ретинах (не обязательно) ======== */
+(function fixDPR(){
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const cssW = canvas.width, cssH = canvas.height;
+  canvas.width = Math.round(cssW * dpr);
+  canvas.height = Math.round(cssH * dpr);
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  render();
+})();
+</script>
 </body>
 </html>
