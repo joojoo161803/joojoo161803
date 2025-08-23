@@ -1,1 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Клеточное поле</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+      background: #eee;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="300" height="300"></canvas>
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
 
+    const gridSize = 30; // размер клетки
+    const rows = 10;
+    const cols = 10;
+
+    // персонаж
+    let player = {x: 0, y: 0};
+
+    // рисуем поле
+    function drawGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#aaa";
+      for (let i = 0; i <= rows; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, i * gridSize);
+        ctx.lineTo(cols * gridSize, i * gridSize);
+        ctx.stroke();
+      }
+      for (let j = 0; j <= cols; j++) {
+        ctx.beginPath();
+        ctx.moveTo(j * gridSize, 0);
+        ctx.lineTo(j * gridSize, rows * gridSize);
+        ctx.stroke();
+      }
+    }
+
+    // рисуем игрока
+    function drawPlayer() {
+      ctx.fillStyle = "blue";
+      ctx.fillRect(player.x * gridSize, player.y * gridSize, gridSize, gridSize);
+    }
+
+    // обработка клавиш
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp" && player.y > 0) player.y--;
+      if (e.key === "ArrowDown" && player.y < rows-1) player.y++;
+      if (e.key === "ArrowLeft" && player.x > 0) player.x--;
+      if (e.key === "ArrowRight" && player.x < cols-1) player.x++;
+      render();
+    });
+
+    // перерисовка
+    function render() {
+      drawGrid();
+      drawPlayer();
+    }
+
+    render();
+  </script>
+</body>
+</html>
