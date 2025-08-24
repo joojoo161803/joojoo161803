@@ -107,15 +107,21 @@ function moveBy(dx, dy){
   const ox = px, oy = py;
   px = nx; py = ny;
   revealAround(px, py);
-
-  if (isMine(px, py)){
-    if (defuseMode){
+  if (defuseMode){
+    if (isMine(px, py)){
       flagged.add(nx+","+ny);
       px = ox; py = oy;
       revealAround(px, py);
-      render();
-      return;
+    }else{
+      px = 0; py = 0;
+      revealAround(px, py);
     }
+    defuseMode = false;
+    render();
+    return;
+  }
+
+  if (isMine(px, py)){
     exploding = true;
     render();
     drawExplosion();
