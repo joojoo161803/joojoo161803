@@ -32,6 +32,7 @@
   <div id="seeds">
     <label>X:&nbsp;<input id="seedX" type="number"></label>
     <label>Y:&nbsp;<input id="seedY" type="number"></label>
+    <label>Mines %:&nbsp;<input id="minePercent" type="number" min="0" max="100"></label>
   </div>
 </div>
 <div class="controls">
@@ -57,6 +58,7 @@ function zoom(factor){ setZoom(CELL * factor); }
 
 let px = 0, py = 0; // позиция игрока в мире
 let seedX = 73856093, seedY = 19349663; // множители генерации стен
+let minePercent = 25; // вероятность появления мин в процентах
 let exploding = false; // взрыв в процессе
 let defuseMode = false; // режим разминирования
 const flagged = new Set(); // отмеченные мины
@@ -84,7 +86,7 @@ function isWall(x,y){
 function isMine(x,y){
   if ((x===0 && y===0) || (Math.abs(x)+Math.abs(y)===1)) return false;
   const v = (x*seedX ^ y*seedY ^ 0xdeadbeef) >>> 0;
-  return (v % 100) < 25; // ~5% мин
+  return (v % 100) < minePercent; // процент мин
 }
 
 function countAdjacentMines(x, y){
@@ -217,8 +219,10 @@ function drawExplosion(){
 
 const seedXInput = document.getElementById('seedX');
 const seedYInput = document.getElementById('seedY');
+const minePercentInput = document.getElementById('minePercent');
 seedXInput.value = seedX;
 seedYInput.value = seedY;
+minePercentInput.value = minePercent;
 function updateSeeds(){
   seedX = parseInt(seedXInput.value,10) || 0;
   seedY = parseInt(seedYInput.value,10) || 0;
@@ -226,6 +230,13 @@ function updateSeeds(){
 }
 seedXInput.addEventListener('input', updateSeeds);
 seedYInput.addEventListener('input', updateSeeds);
+
+function updateMinePercent(){
+  const v = parseInt(minePercentInput.value,10);
+  minePercent = Math.max(0, Math.min(100, isNaN(v) ? 0 : v));
+  render();
+}
+minePercentInput.addEventListener('input', updateMinePercent);
 
 // клавиатура
 window.addEventListener('keydown', e=>{
