@@ -85,6 +85,18 @@ function isMine(x,y){
   return (v % 100) < 5; // ~5% мин
 }
 
+function countAdjacentMines(x, y){
+  let count = 0;
+  for(let dx=-1; dx<=1; dx++){
+    for(let dy=-1; dy<=1; dy++){
+      if(dx===0 && dy===0) continue;
+      const nx=x+dx, ny=y+dy;
+      if(!isWall(nx,ny) && isMine(nx,ny)) count++;
+    }
+  }
+  return count;
+}
+
 function moveBy(dx, dy){
   if (exploding) return;
   const nx = px + dx, ny = py + dy;
@@ -114,6 +126,10 @@ function render(){
   const tlx = px - halfC, tly = py - halfR;
   const brx = tlx + VIEW_COLS - 1, bry = tly + VIEW_ROWS - 1;
 
+  ctx.font = `${CELL*0.8}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
   // видимые клетки
   for(let gy=tly; gy<=bry; gy++){
     for(let gx=tlx; gx<=brx; gx++){
@@ -130,6 +146,12 @@ function render(){
       }else if(isMine(gx,gy)){
         ctx.fillStyle='#f00';
         ctx.fillRect(sx+1,sy+1,CELL-2,CELL-2);
+      }else{
+        const mines=countAdjacentMines(gx,gy);
+        if(mines>0){
+          ctx.fillStyle='#000';
+          ctx.fillText(mines, sx+CELL/2, sy+CELL/2);
+        }
       }
     }
   }
