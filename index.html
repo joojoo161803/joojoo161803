@@ -180,11 +180,11 @@ function render(){
 
   // игрок (в центре экрана)
   if(!exploding){
-    ctx.fillStyle = '#3572ff';
     const psx=(px-tlx)*CELL+1, psy=(py-tly)*CELL+1;
+    ctx.fillStyle = defuseMode ? '#ff0' : '#3572ff';
     ctx.fillRect(psx,psy,CELL-2,CELL-2);
     const playerMines=countAdjacentMines(px,py);
-    ctx.fillStyle='#fff';
+    ctx.fillStyle=defuseMode ? '#000' : '#fff';
     ctx.fillText(playerMines, psx+CELL/2, psy+CELL/2);
   }
 
