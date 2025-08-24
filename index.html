@@ -161,9 +161,13 @@ function render(){
     ctx.fillStyle = '#3572ff';
     const psx=(px-tlx)*CELL+1, psy=(py-tly)*CELL+1;
     ctx.fillRect(psx,psy,CELL-2,CELL-2);
+    const playerMines=countAdjacentMines(px,py);
+    ctx.fillStyle='#fff';
+    ctx.fillText(playerMines, psx+CELL/2, psy+CELL/2);
   }
 
-  coordEl.textContent = `x: ${px}, y: ${py}`;
+  const currentMines = countAdjacentMines(px,py);
+  coordEl.textContent = `x: ${px}, y: ${py}, mines: ${currentMines}`;
 }
 render();
 
