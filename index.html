@@ -58,6 +58,8 @@ function zoom(factor){ setZoom(CELL * factor); }
 let px = 0, py = 0; // позиция игрока в мире
 let seedX = 73856093, seedY = 19349663; // множители генерации стен
 let exploding = false; // взрыв в процессе
+let defuseMode = false; // режим разминирования
+const flagged = new Set(); // отмеченные мины
 
 // посещённые области
 const REVEAL_RADIUS = 0;
@@ -102,10 +104,18 @@ function moveBy(dx, dy){
   const nx = px + dx, ny = py + dy;
   if (isWall(nx, ny)) return;
 
+  const ox = px, oy = py;
   px = nx; py = ny;
   revealAround(px, py);
 
   if (isMine(px, py)){
+    if (defuseMode){
+      flagged.add(nx+","+ny);
+      px = ox; py = oy;
+      revealAround(px, py);
+      render();
+      return;
+    }
     exploding = true;
     render();
     drawExplosion();
@@ -146,6 +156,10 @@ function render(){
       }else if(isMine(gx,gy)){
         ctx.fillStyle='#f00';
         ctx.fillRect(sx+1,sy+1,CELL-2,CELL-2);
+        if(flagged.has(key)){
+          ctx.fillStyle='#fff';
+          ctx.fillText('⚑', sx+CELL/2, sy+CELL/2);
+        }
       }else{
         const mines=countAdjacentMines(gx,gy);
         if(mines>0){
@@ -167,7 +181,7 @@ function render(){
   }
 
   const currentMines = countAdjacentMines(px,py);
-  coordEl.textContent = `x: ${px}, y: ${py}, mines: ${currentMines}`;
+  coordEl.textContent = `x: ${px}, y: ${py}, mines: ${currentMines}, mode: ${defuseMode?'defuse':'walk'}`;
 }
 render();
 
@@ -214,6 +228,7 @@ window.addEventListener('keydown', e=>{
   else if (e.key==='ArrowRight' || e.key==='d') moveBy(1,0);
   else if (e.key==='+' || e.key==='=') zoom(1.1);
   else if (e.key==='-') zoom(0.9);
+  else if (e.key===' ') { defuseMode = !defuseMode; render(); }
   else handled = false;
   if (handled) e.preventDefault();
 });
