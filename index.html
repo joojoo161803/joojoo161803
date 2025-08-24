@@ -60,7 +60,7 @@ let seedX = 73856093, seedY = 19349663; // множители генерации
 let exploding = false; // взрыв в процессе
 
 // посещённые области
-const REVEAL_RADIUS = 1;
+const REVEAL_RADIUS = 0;
 const revealed = new Set();
 function revealAround(x, y){
   for(let dx=-REVEAL_RADIUS; dx<=REVEAL_RADIUS; dx++){
