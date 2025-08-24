@@ -75,14 +75,14 @@ revealAround(px, py);
 function isWall(x,y){
   if ((x===0 && y===0) || (Math.abs(x)+Math.abs(y)===1)) return false;
   const v = (x*seedX ^ y*seedY) >>> 0;
-  return (v % 100) < 15; // ~15% стен
+  return (v % 100) < 2; // ~15% стен
 }
 
 // псевдослучайные мины
 function isMine(x,y){
   if ((x===0 && y===0) || (Math.abs(x)+Math.abs(y)===1)) return false;
   const v = (x*seedX ^ y*seedY ^ 0xdeadbeef) >>> 0;
-  return (v % 100) < 5; // ~5% мин
+  return (v % 100) < 25; // ~5% мин
 }
 
 function countAdjacentMines(x, y){
