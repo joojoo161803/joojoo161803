@@ -50,7 +50,7 @@ const coordEl = document.getElementById('coords');
 
 let CELL = 16;
 function setZoom(newCell){
-  CELL = Math.max(8, Math.min(64, newCell));
+  CELL = Math.max(1, Math.min(64, newCell));
   render();
 }
 function zoom(factor){ setZoom(CELL * factor); }
