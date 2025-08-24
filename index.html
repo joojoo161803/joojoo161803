@@ -8,6 +8,7 @@
   html,body{margin:0;height:100%;background:#eee;font-family:system-ui,Arial}
   #wrap{display:flex;flex-direction:column;height:100%}
   canvas{touch-action:none;display:block;margin:0 auto;background:#eee;border:1px solid #999}
+  #coords{text-align:center;margin-top:4px;font-size:14px}
   .controls{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:20px;
             padding:12px;pointer-events:none;}
   .pad{pointer-events:auto;display:grid;grid-template-columns:48px 48px 48px;
@@ -25,6 +26,7 @@
 <body>
 <div id="wrap">
   <canvas id="game" width="640" height="480"></canvas>
+  <div id="coords"></div>
 </div>
 <div class="controls">
   <div class="pad">
@@ -38,6 +40,7 @@
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
+const coordEl = document.getElementById('coords');
 
 const CELL = 16;
 const VIEW_COLS = Math.floor(canvas.width / CELL);
@@ -90,6 +93,8 @@ function render(){
   ctx.fillStyle = '#3572ff';
   const psx=(px-tlx)*CELL+1, psy=(py-tly)*CELL+1;
   ctx.fillRect(psx,psy,CELL-2,CELL-2);
+
+  coordEl.textContent = `x: ${px}, y: ${py}`;
 }
 render();
 
