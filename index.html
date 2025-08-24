@@ -9,6 +9,8 @@
   #wrap{display:flex;flex-direction:column;height:100%}
   canvas{touch-action:none;display:block;margin:0 auto;background:#eee;border:1px solid #999}
   #coords{text-align:center;margin-top:4px;font-size:14px}
+  #seeds{text-align:center;margin-top:4px;font-size:14px}
+  #seeds input{width:90px}
   .controls{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:20px;
             padding:12px;pointer-events:none;}
   .pad{pointer-events:auto;display:grid;grid-template-columns:48px 48px 48px;
@@ -27,6 +29,10 @@
 <div id="wrap">
   <canvas id="game" width="640" height="480"></canvas>
   <div id="coords"></div>
+  <div id="seeds">
+    <label>X:&nbsp;<input id="seedX" type="number"></label>
+    <label>Y:&nbsp;<input id="seedY" type="number"></label>
+  </div>
 </div>
 <div class="controls">
   <div class="pad">
@@ -47,11 +53,12 @@ const VIEW_COLS = Math.floor(canvas.width / CELL);
 const VIEW_ROWS = Math.floor(canvas.height / CELL);
 
 let px = 0, py = 0; // позиция игрока в мире
+let seedX = 73856093, seedY = 19349663; // множители генерации стен
 
 // псевдослучайные стены
 function isWall(x,y){
   if ((x===0 && y===0) || (Math.abs(x)+Math.abs(y)===1)) return false;
-  const v = (x*73856093 ^ y*19349663) >>> 0;
+  const v = (x*seedX ^ y*seedY) >>> 0;
   return (v % 100) < 15; // ~15% стен
 }
 
@@ -97,6 +104,18 @@ function render(){
   coordEl.textContent = `x: ${px}, y: ${py}`;
 }
 render();
+
+const seedXInput = document.getElementById('seedX');
+const seedYInput = document.getElementById('seedY');
+seedXInput.value = seedX;
+seedYInput.value = seedY;
+function updateSeeds(){
+  seedX = parseInt(seedXInput.value,10) || 0;
+  seedY = parseInt(seedYInput.value,10) || 0;
+  render();
+}
+seedXInput.addEventListener('input', updateSeeds);
+seedYInput.addEventListener('input', updateSeeds);
 
 // клавиатура
 window.addEventListener('keydown', e=>{
