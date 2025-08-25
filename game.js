@@ -44,10 +44,13 @@ function isWall(x,y){
 }
 
 // псевдослучайные мины
-function isMine(x,y){
+function generatedMine(x,y){
   if ((x===0 && y===0) || (Math.abs(x)+Math.abs(y)===1)) return false;
   const v = (x*SEED_X ^ y*SEED_Y ^ 0xdeadbeef) >>> 0;
   return (v % 100) < DEFAULT_MINE_PERCENT; // процент мин
+}
+function isMine(x,y){
+  return generatedMine(x,y);
 }
 
 function countAdjacentMines(x, y){
@@ -281,3 +284,27 @@ canvas.addEventListener('wheel', e=>{
   e.preventDefault();
   zoom(e.deltaY<0?1.1:0.9);
 },{passive:false});
+
+// установка флага ЛКМ
+canvas.addEventListener('mousedown', e=>{
+  if(e.button!==0) return;
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const gx=Math.floor(mx/CELL), gy=Math.floor(my/CELL);
+  const VIEW_COLS=Math.floor(canvas.width/CELL);
+  const VIEW_ROWS=Math.floor(canvas.height/CELL);
+  const halfC=Math.floor(VIEW_COLS/2), halfR=Math.floor(VIEW_ROWS/2);
+  const wx=px-halfC+gx, wy=py-halfR+gy;
+  const key=wx+","+wy;
+  if(isMine(wx,wy)){
+    flagged.add(key);
+    revealed.add(key);
+    floodReveal(px,py);
+    autoRevealAround(px,py);
+  }else{
+    px=0; py=0;
+    floodReveal(px,py);
+    autoRevealAround(px,py);
+  }
+  render();
+});
