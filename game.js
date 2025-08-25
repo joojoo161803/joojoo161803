@@ -62,6 +62,29 @@ function countAdjacentMines(x, y){
   return count;
 }
 
+function autoRevealAround(x, y){
+  const total = countAdjacentMines(x, y);
+  let flaggedCount = 0;
+  for(let dx=-1; dx<=1; dx++){
+    for(let dy=-1; dy<=1; dy++){
+      if(dx===0 && dy===0) continue;
+      const key = (x+dx)+","+(y+dy);
+      if(flagged.has(key)) flaggedCount++;
+    }
+  }
+  if(flaggedCount === total){
+    for(let dx=-1; dx<=1; dx++){
+      for(let dy=-1; dy<=1; dy++){
+        if(dx===0 && dy===0) continue;
+        const nx = x+dx, ny = y+dy;
+        const key = nx+","+ny;
+        if(flagged.has(key) || revealed.has(key)) continue;
+        floodReveal(nx, ny);
+      }
+    }
+  }
+}
+
 function moveBy(dx, dy){
   if (exploding) return;
   const nx = px + dx, ny = py + dy;
@@ -75,9 +98,11 @@ function moveBy(dx, dy){
       revealed.add(nx+","+ny);
       px = ox; py = oy;
       floodReveal(px, py);
+      autoRevealAround(px, py);
     }else{
       px = 0; py = 0;
       floodReveal(px, py);
+      autoRevealAround(px, py);
     }
     defuseMode = false;
     render();
@@ -85,7 +110,9 @@ function moveBy(dx, dy){
   }
 
   floodReveal(px, py);
-  if (isMine(px, py)){
+  const steppedMine = isMine(px, py);
+  if (!steppedMine) autoRevealAround(px, py);
+  if (steppedMine){
     exploding = true;
     render();
     drawExplosion();
