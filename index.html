@@ -64,7 +64,7 @@ let defuseMode = false; // режим разминирования
 const flagged = new Set(); // отмеченные мины
 
 // посещённые области
-const REVEAL_RADIUS = 0;
+const REVEAL_RADIUS = 10;
 const revealed = new Set();
 function revealAround(x, y){
   for(let dx=-REVEAL_RADIUS; dx<=REVEAL_RADIUS; dx++){
