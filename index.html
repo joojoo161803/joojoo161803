@@ -64,16 +64,25 @@ let defuseMode = false; // режим разминирования
 const flagged = new Set(); // отмеченные мины
 
 // посещённые области
-const REVEAL_RADIUS = 10;
 const revealed = new Set();
-function revealAround(x, y){
-  for(let dx=-REVEAL_RADIUS; dx<=REVEAL_RADIUS; dx++){
-    for(let dy=-REVEAL_RADIUS; dy<=REVEAL_RADIUS; dy++){
-      revealed.add((x+dx)+","+(y+dy));
+function floodReveal(x, y){
+  const stack = [[x, y]];
+  while(stack.length){
+    const [cx, cy] = stack.pop();
+    const key = cx + "," + cy;
+    if(revealed.has(key) || isWall(cx, cy) || isMine(cx, cy)) continue;
+    revealed.add(key);
+    if(countAdjacentMines(cx, cy) === 0){
+      for(let dx=-1; dx<=1; dx++){
+        for(let dy=-1; dy<=1; dy++){
+          if(dx===0 && dy===0) continue;
+          stack.push([cx+dx, cy+dy]);
+        }
+      }
     }
   }
 }
-revealAround(px, py);
+floodReveal(px, py);
 
 // псевдослучайные стены
 function isWall(x,y){
@@ -108,26 +117,27 @@ function moveBy(dx, dy){
 
   const ox = px, oy = py;
   px = nx; py = ny;
-  revealAround(px, py);
   if (defuseMode){
     if (isMine(px, py)){
       flagged.add(nx+","+ny);
+      revealed.add(nx+","+ny);
       px = ox; py = oy;
-      revealAround(px, py);
+      floodReveal(px, py);
     }else{
       px = 0; py = 0;
-      revealAround(px, py);
+      floodReveal(px, py);
     }
     defuseMode = false;
     render();
     return;
   }
 
+  floodReveal(px, py);
   if (isMine(px, py)){
     exploding = true;
     render();
     drawExplosion();
-    setTimeout(()=>{ px=0; py=0; revealAround(px,py); exploding=false; render(); }, 500);
+    setTimeout(()=>{ px=0; py=0; floodReveal(px,py); exploding=false; render(); }, 500);
   }else{
     render();
   }
