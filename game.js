@@ -211,7 +211,6 @@ function drawExplosion(){
   ctx.stroke();
 }
 
-
 // клавиатура
 window.addEventListener('keydown', e=>{
   let handled = true;
@@ -226,87 +225,7 @@ window.addEventListener('keydown', e=>{
   if (handled) e.preventDefault();
 });
 
-// D-pad
-let holdTimer=null;
-function startHold(dx,dy){
-  moveBy(dx,dy);
-  stopHold();
-  holdTimer=setInterval(()=>moveBy(dx,dy),140);
-}
-function stopHold(){ if(holdTimer){clearInterval(holdTimer);holdTimer=null;} }
-document.querySelectorAll('.btn').forEach(btn=>{
-  const dx=parseInt(btn.dataset.dx,10), dy=parseInt(btn.dataset.dy,10);
-  btn.addEventListener('touchstart', ev=>{ev.preventDefault();startHold(dx,dy);},{passive:false});
-  btn.addEventListener('touchend', ev=>{ev.preventDefault();stopHold();},{passive:false});
-  btn.addEventListener('mousedown', ()=>startHold(dx,dy));
-  window.addEventListener('mouseup', stopHold);
-});
-
-// свайпы
-let swipeStart=null;
-let pinchStartDist=null, pinchStartCell=CELL;
-canvas.addEventListener('touchstart', e=>{
-  if(e.touches.length===1){
-    swipeStart={x:e.touches[0].clientX,y:e.touches[0].clientY,t:performance.now()};
-  }else if(e.touches.length===2){
-    const dx=e.touches[0].clientX-e.touches[1].clientX;
-    const dy=e.touches[0].clientY-e.touches[1].clientY;
-    pinchStartDist=Math.hypot(dx,dy);
-    pinchStartCell=CELL;
-    swipeStart=null;
-    e.preventDefault();
-  }
-},{passive:false});
-canvas.addEventListener('touchmove', e=>{
-  if(e.touches.length===2 && pinchStartDist){
-    const dx=e.touches[0].clientX-e.touches[1].clientX;
-    const dy=e.touches[0].clientY-e.touches[1].clientY;
-    const dist=Math.hypot(dx,dy);
-    setZoom(pinchStartCell*dist/pinchStartDist);
-    e.preventDefault();
-  }
-},{passive:false});
-canvas.addEventListener('touchend', e=>{
-  if(e.touches.length<2) pinchStartDist=null;
-  if(!swipeStart) return;
-  const t=performance.now()-swipeStart.t;
-  const touch=(e.changedTouches&&e.changedTouches[0])||null;
-  if(touch){
-    const dx=touch.clientX-swipeStart.x, dy=touch.clientY-swipeStart.y;
-    const absX=Math.abs(dx), absY=Math.abs(dy);
-    if(Math.max(absX,absY)>=24 && t<600){
-      if(absX>absY) moveBy(dx>0?1:-1,0);
-      else moveBy(0,dy>0?1:-1);
-    }
-  }
-  swipeStart=null;
-},{passive:true});
-
 canvas.addEventListener('wheel', e=>{
   e.preventDefault();
   zoom(e.deltaY<0?1.1:0.9);
 },{passive:false});
-
-// установка флага ЛКМ
-canvas.addEventListener('mousedown', e=>{
-  if(e.button!==0) return;
-  const rect=canvas.getBoundingClientRect();
-  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-  const gx=Math.floor(mx/CELL), gy=Math.floor(my/CELL);
-  const VIEW_COLS=Math.floor(canvas.width/CELL);
-  const VIEW_ROWS=Math.floor(canvas.height/CELL);
-  const halfC=Math.floor(VIEW_COLS/2), halfR=Math.floor(VIEW_ROWS/2);
-  const wx=px-halfC+gx, wy=py-halfR+gy;
-  const key=wx+","+wy;
-  if(isMine(wx,wy)){
-    flagged.add(key);
-    revealed.add(key);
-    floodReveal(px,py);
-    autoRevealAround(px,py);
-  }else{
-    px=0; py=0;
-    floodReveal(px,py);
-    autoRevealAround(px,py);
-  }
-  render();
-});
