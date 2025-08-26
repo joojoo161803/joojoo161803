@@ -92,13 +92,15 @@ function moveBy(dx, dy){
   if (exploding) return;
   const nx = px + dx, ny = py + dy;
   if (isWall(nx, ny)) return;
+  const key = nx + "," + ny;
+  if (flagged.has(key)) return;
 
   const ox = px, oy = py;
   px = nx; py = ny;
   if (defuseMode){
     if (isMine(px, py)){
-      flagged.add(nx+","+ny);
-      revealed.add(nx+","+ny);
+      flagged.add(key);
+      revealed.add(key);
       px = ox; py = oy;
       floodReveal(px, py);
       autoRevealAround(px, py);
