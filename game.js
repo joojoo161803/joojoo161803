@@ -1,4 +1,4 @@
-import { SEED_X, SEED_Y, DEFAULT_MINE_PERCENT } from "./constants.js";
+import { SEED_X, SEED_Y, DEFAULT_MINE_PERCENT, DEFAULT_FLAG_COUNT } from "./constants.js";
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const coordEl = document.getElementById('coords');
@@ -13,7 +13,8 @@ function zoom(factor){ setZoom(CELL * factor); }
 let px = 0, py = 0; // позиция игрока в мире
 let exploding = false; // взрыв в процессе
 let defuseMode = false; // режим разминирования
-const flagged = new Set(); // отмеченные мины
+const flagged = new Set(); // отмеченные поля
+let flagsLeft = DEFAULT_FLAG_COUNT; // оставшиеся флажки
 
 // посещённые области
 const revealed = new Set();
@@ -22,7 +23,7 @@ function floodReveal(x, y){
   while(stack.length){
     const [cx, cy] = stack.pop();
     const key = cx + "," + cy;
-    if(revealed.has(key) || isWall(cx, cy) || isMine(cx, cy)) continue;
+    if(revealed.has(key) || flagged.has(key) || isWall(cx, cy) || isMine(cx, cy)) continue;
     revealed.add(key);
     if(countAdjacentMines(cx, cy) === 0){
       for(let dx=-1; dx<=1; dx++){
@@ -93,23 +94,23 @@ function moveBy(dx, dy){
   const nx = px + dx, ny = py + dy;
   if (isWall(nx, ny)) return;
   const key = nx + "," + ny;
-  if (flagged.has(key)) return;
+  if (flagged.has(key) && !defuseMode) return;
 
   const ox = px, oy = py;
   px = nx; py = ny;
   if (defuseMode){
-    if (isMine(px, py)){
-      flagged.add(key);
-      revealed.add(key);
-      px = ox; py = oy;
-      floodReveal(px, py);
-      autoRevealAround(px, py);
-    }else{
-      px = 0; py = 0;
-      floodReveal(px, py);
-      autoRevealAround(px, py);
+    if(!revealed.has(key)){
+      if(flagged.has(key)){
+        flagged.delete(key);
+        flagsLeft++;
+      }else if(flagsLeft > 0){
+        flagged.add(key);
+        flagsLeft--;
+      }
+      autoRevealAround(ox, oy);
     }
     defuseMode = false;
+    px = ox; py = oy;
     render();
     return;
   }
@@ -146,8 +147,19 @@ function render(){
   for(let gy=tly; gy<=bry; gy++){
     for(let gx=tlx; gx<=brx; gx++){
       const key=gx+","+gy;
-      if(!revealed.has(key)) continue;
       const sx=(gx-tlx)*CELL, sy=(gy-tly)*CELL;
+
+      if(flagged.has(key) && !revealed.has(key)){
+        ctx.fillStyle='#ccc';
+        ctx.fillRect(sx,sy,CELL,CELL);
+        ctx.strokeStyle='#444';
+        ctx.strokeRect(sx,sy,CELL,CELL);
+        ctx.fillStyle='#000';
+        ctx.fillText('⚑', sx+CELL/2, sy+CELL/2);
+        continue;
+      }
+
+      if(!revealed.has(key)) continue;
 
       ctx.fillStyle='#eee';
       ctx.fillRect(sx,sy,CELL,CELL);
@@ -185,7 +197,7 @@ function render(){
   }
 
   const currentMines = countAdjacentMines(px,py);
-  coordEl.textContent = `x: ${px}, y: ${py}, mines: ${currentMines}, mode: ${defuseMode?'defuse':'walk'}`;
+  coordEl.textContent = `x: ${px}, y: ${py}, mines: ${currentMines}, flags: ${flagsLeft}, mode: ${defuseMode?'defuse':'walk'}`;
 }
 render();
 
