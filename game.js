@@ -192,12 +192,15 @@ function render(){
     ctx.fillStyle = defuseMode ? '#ff0' : '#3572ff';
     ctx.fillRect(psx,psy,CELL-2,CELL-2);
     const playerMines=countAdjacentMines(px,py);
-    ctx.fillStyle=defuseMode ? '#000' : '#fff';
-    ctx.fillText(playerMines, psx+CELL/2, psy+CELL/2);
+    if(playerMines>0){
+      ctx.fillStyle=defuseMode ? '#000' : '#fff';
+      ctx.fillText(playerMines, psx+CELL/2, psy+CELL/2);
+    }
   }
 
   const currentMines = countAdjacentMines(px,py);
-  coordEl.textContent = `x: ${px}, y: ${py}, mines: ${currentMines}, flags: ${flagsLeft}, mode: ${defuseMode?'defuse':'walk'}`;
+  const mineInfo = currentMines>0 ? `, mines: ${currentMines}` : '';
+  coordEl.textContent = `x: ${px}, y: ${py}${mineInfo}, flags: ${flagsLeft}, mode: ${defuseMode?'defuse':'walk'}`;
 }
 render();
 
