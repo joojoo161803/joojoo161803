@@ -15,6 +15,7 @@ let exploding = false; // взрыв в процессе
 let defuseMode = false; // режим разминирования
 const flagged = new Set(); // отмеченные поля
 let flagsLeft = DEFAULT_FLAG_COUNT; // оставшиеся флажки
+let flagAction = null; // 'place' or 'remove'
 
 // посещённые области
 const revealed = new Set();
@@ -100,15 +101,17 @@ function moveBy(dx, dy){
   px = nx; py = ny;
   if (defuseMode){
     if(!revealed.has(key)){
-      if(flagged.has(key)){
-        flagged.delete(key);
-        flagsLeft++;
-      }else if(flagsLeft > 0){
+      const hasFlag = flagged.has(key);
+      if(flagAction === 'place' && !hasFlag && flagsLeft > 0){
         flagged.add(key);
         flagsLeft--;
+      }else if(flagAction === 'remove' && hasFlag){
+        flagged.delete(key);
+        flagsLeft++;
       }
     }
     defuseMode = false;
+    flagAction = null;
     px = ox; py = oy;
     render();
     return;
@@ -234,8 +237,10 @@ window.addEventListener('keydown', e=>{
   else if (e.key==='ArrowRight' || e.key==='d') moveBy(1,0);
   else if (e.key==='+' || e.key==='=') zoom(1.1);
   else if (e.key==='-') zoom(0.9);
-  else if (e.key===' ') { defuseMode = !defuseMode; render(); }
+  else if (e.key==='1') { defuseMode = true; flagAction = 'place'; render(); }
   else if (e.key==='2') { autoRevealAround(px, py); render(); }
+  else if (e.key==='3') { defuseMode = true; flagAction = 'remove'; render(); }
+  else if (e.key===' ') { defuseMode = !defuseMode; flagAction = 'place'; render(); }
   else handled = false;
   if (handled) e.preventDefault();
 });
@@ -244,3 +249,20 @@ canvas.addEventListener('wheel', e=>{
   e.preventDefault();
   zoom(e.deltaY<0?1.1:0.9);
 },{passive:false});
+
+document.getElementById('flagBtn').addEventListener('click', ()=>{
+  defuseMode = true;
+  flagAction = 'place';
+  render();
+});
+
+document.getElementById('revealBtn').addEventListener('click', ()=>{
+  autoRevealAround(px, py);
+  render();
+});
+
+document.getElementById('removeBtn').addEventListener('click', ()=>{
+  defuseMode = true;
+  flagAction = 'remove';
+  render();
+});
