@@ -169,7 +169,7 @@ function render(){
       ctx.strokeRect(sx,sy,CELL,CELL);
 
       if (isWall(gx,gy)){
-        ctx.fillStyle='#777';
+        ctx.fillStyle='#555';
         ctx.fillRect(sx+1,sy+1,CELL-2,CELL-2);
       }else if(isMine(gx,gy)){
         ctx.fillStyle='#f00';
