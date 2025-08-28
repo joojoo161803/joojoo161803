@@ -41,7 +41,7 @@ floodReveal(px, py);
 function isWall(x,y){
   if ((x===0 && y===0) || (Math.abs(x)+Math.abs(y)===1)) return false;
   const v = (x*SEED_X ^ y*SEED_Y) >>> 0;
-  return (v % 100) < 0; // ~15% стен
+  return (v % 100) < 10; // ~15% стен
 }
 
 // псевдослучайные мины
