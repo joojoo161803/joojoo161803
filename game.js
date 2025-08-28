@@ -237,9 +237,9 @@ window.addEventListener('keydown', e=>{
   else if (e.key==='ArrowRight' || e.key==='d') moveBy(1,0);
   else if (e.key==='+' || e.key==='=') zoom(1.1);
   else if (e.key==='-') zoom(0.9);
-  else if (e.key==='1') { defuseMode = true; flagAction = 'place'; render(); }
+  else if (e.key==='1') { defuseMode = !defuseMode; flagAction = 'place'; render(); }
   else if (e.key==='2') { autoRevealAround(px, py); render(); }
-  else if (e.key==='3') { defuseMode = true; flagAction = 'remove'; render(); }
+  else if (e.key==='3') { }
   else if (e.key===' ') { defuseMode = !defuseMode; flagAction = 'place'; render(); }
   else handled = false;
   if (handled) e.preventDefault();
