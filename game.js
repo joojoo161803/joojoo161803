@@ -107,7 +107,6 @@ function moveBy(dx, dy){
         flagged.add(key);
         flagsLeft--;
       }
-      autoRevealAround(ox, oy);
     }
     defuseMode = false;
     px = ox; py = oy;
@@ -117,7 +116,7 @@ function moveBy(dx, dy){
 
   floodReveal(px, py);
   const steppedMine = isMine(px, py);
-  if (!steppedMine) autoRevealAround(px, py);
+  // autoRevealAround now triggered manually with key 2
   if (steppedMine){
     exploding = true;
     render();
@@ -236,6 +235,7 @@ window.addEventListener('keydown', e=>{
   else if (e.key==='+' || e.key==='=') zoom(1.1);
   else if (e.key==='-') zoom(0.9);
   else if (e.key===' ') { defuseMode = !defuseMode; render(); }
+  else if (e.key==='2') { autoRevealAround(px, py); render(); }
   else handled = false;
   if (handled) e.preventDefault();
 });
